@@ -33,28 +33,48 @@ class AnnotationCountsView(APIView):
         task = get_object_or_404(Task, pk=task_id)
 
         # Refuse a user who has no access to this task, using CVAT's existing
-        # task-view authorization (the same check the task endpoints run via OPA).
+        # task-view authorization (same check the task endpoints run via OPA).
         iam_context = get_iam_context(request, task)
         if not TaskPermission.create_scope_view(request, task, iam_context).check_access().allow:
             raise PermissionDenied("You do not have permission to view this task.")
 
         # MO-1 measurement hook (see docs/Objectives.md): time only the count
-        # computation, with auth and the network outside the marks.
+        # computation, with auth and the task lookup outside the marks.
         started = time.perf_counter()
 
-        rows = (
-            LabeledShape.objects.filter(job__segment__task_id=task_id)
-            .values("label__name")
-            .annotate(count=Count("id"))
-            .order_by("-count")
-        )
-        counts = [{"label": r["label__name"], "count": r["count"]} for r in rows]
-        total = sum(c["count"] for c in counts)
+        # Item 7: optional grouping beyond the plain per-class count.
+        # 'source' answers "how much was imported vs. drawn by hand?",
+        # 'type' answers "what shape types are in this task?".
+        group_by = request.query_params.get("group_by")
+        group_field = {"source": "source", "type": "type"}.get(group_by)
+
+        base = LabeledShape.objects.filter(job__segment__task_id=task_id)
+
+        if group_field:
+            rows = (
+                base.values("label__name", group_field)
+                .annotate(count=Count("id"))
+                .order_by("label__name", group_field)
+            )
+            grouped: dict[str, dict] = {}
+            for r in rows:
+                entry = grouped.setdefault(r["label__name"], {"label": r["label__name"], "count": 0, "groups": {}})
+                entry["count"] += r["count"]
+                entry["groups"][r[group_field]] = r["count"]
+            counts = sorted(grouped.values(), key=lambda e: e["count"], reverse=True)
+        else:
+            rows = base.values("label__name").annotate(count=Count("id")).order_by("-count")
+            counts = [{"label": r["label__name"], "count": r["count"]} for r in rows]
+
+        total = sum(e["count"] for e in counts)
 
         elapsed_ms = (time.perf_counter() - started) * 1000
         slogger.glob.info(
-            f"annotation-counts task_id={task_id} "
+            f"annotation-counts task_id={task_id} group_by={group_by or 'none'} "
             f"classes={len(counts)} total={total} elapsed_ms={elapsed_ms:.1f}"
         )
 
-        return Response({"task_id": task_id, "counts": counts})
+        payload = {"task_id": task_id, "total": total, "counts": counts}
+        if group_field:
+            payload["group_by"] = group_by
+        return Response(payload)

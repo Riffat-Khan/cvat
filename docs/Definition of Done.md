@@ -46,15 +46,28 @@ work I didn't finish — it's listed as such, not hidden.
 
 ## Grouping (item 7)
 
-- [ ] One grouping beyond the plain count, with a reason.
-  Evidence: _<endpoint param + commit>_
+- [x] One grouping beyond the plain count, with a reason.
+  Evidence: `?group_by=source` (and `?group_by=type`) on
+  `GET /api/tasks/<id>/annotation-counts`; the page shows a "Group by" Select and
+  renders the split as a stacked bar chart. **Why `source`:** it separates
+  annotations imported from the COCO file from those drawn or fixed by hand (and
+  auto), which is the number an annotation team actually cares about — how much
+  real manual work a task represents, not just how many boxes exist. `type` is
+  offered too, for shape-composition at a glance.
 
 ## Stretch (items 8–9)
 
-- [ ] The graph updates live over WebSocket.
-  Evidence: _<commit / clip>_
-- [ ] The page recovers when the connection drops and comes back.
-  Evidence: _<commit / clip>_
+- [x] The graph updates live over WebSocket.
+  Evidence: raw ASGI socket `cvat/apps/test/ws.py` routed in `cvat/asgi.py`; a
+  `Task.post_save` signal (`signals.py`) publishes to Redis (`events.py`), the
+  socket forwards a "changed" notice, and the page re-fetches the counts. Verified:
+  server boots under uvicorn with the socket wired; drawing/deleting a box updates
+  the graph without reload. ⟨screenshot/clip: docs/img/live.png⟩
+- [x] The page recovers when the connection drops and comes back.
+  Evidence: `onclose` in `annotation-analytics-page.tsx` shows "Reconnecting…" and
+  retries every 2 s (fatal auth codes 4401/4403/4404 stop instead). Reproduce:
+  `docker restart cvat_server` with the page open → badge goes Reconnecting → Live.
+  ⟨screenshot/clip: docs/img/reconnect.png⟩
 
 ## Housekeeping
 
