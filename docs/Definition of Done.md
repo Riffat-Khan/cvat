@@ -38,14 +38,11 @@ work I didn't finish — it's listed as such, not hidden.
 
 ## Objective (item 6)
 
-Measurement hook is in place (`elapsed_ms` log line in `cvat/apps/test/views.py`).
-Tick these two once the 5 runs are done and pasted into `docs/Objectives.md`.
-
-- [ ] Objective measured, 5 runs, raw output saved.
-  Evidence: `docs/Objectives.md` (Result block). Reproduce: hit the endpoint 6×
-  (`curl`), discard the first, read 5 `elapsed_ms` values from `docker logs cvat_server`.
-- [ ] Target met, or missed with the reason written down.
-  Evidence: `docs/Objectives.md` (median vs 150 ms target).
+- [x] Objective measured, 5 runs, raw output saved.
+  Evidence: `docs/Objectives.md` Result block — 5 `elapsed_ms` values
+  (87.6 / 72.9 / 83.7 / 69.6 / 66.1 ms), cold run discarded.
+- [x] Target met, or missed with the reason written down.
+  Evidence: `docs/Objectives.md` — median 72.9 ms vs the 150 ms target: met.
 
 ## Grouping (item 7)
 

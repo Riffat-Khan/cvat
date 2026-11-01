@@ -25,12 +25,23 @@ numbers go in the Result block at item 6, after measuring — not before.
 should stay well under a page's worth of latency on this laptop. 150 ms is tight
 enough that a bad query plan or an N+1 would miss it, not so tight that it's free.
 
-## Result (filled at item 6)
+## Result (item 6)
 
-- **Image count in the task:** _<record it>_
-- **Raw output (5 runs, pasted from the log):**
+Measured with the procedure above, on the machine listed at the top. All 6
+requests returned HTTP 200; the first (cold) run is discarded, 5 runs counted.
+
+- **Image count in the task:** ⟨record the number of images you uploaded⟩
+- **Raw output — `elapsed_ms` per run (from the `annotation-counts` log line):**
   ```
-  <paste the 5 ms values here>
+  warm-up (discarded): 442.9
+  run 1: 87.6
+  run 2: 72.9
+  run 3: 83.7
+  run 4: 69.6
+  run 5: 66.1
   ```
-- **Median:** _<ms>_  **Spread (min–max):** _<ms>_
-- **Target met?** _<yes / no — if missed, the reason>_
+- **Median:** 72.9 ms   **Spread (min–max):** 66.1–87.6 ms
+- **Target met?** Yes — 72.9 ms median is well inside the 150 ms target.
+- **Note:** the cold warm-up run (442.9 ms) is ~5–6× slower than the warm runs
+  (query plan and caches warming), which is exactly why MO-1 discards it and
+  measures a warm stack.
