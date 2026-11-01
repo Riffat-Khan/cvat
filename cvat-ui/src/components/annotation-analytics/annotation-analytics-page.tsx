@@ -6,6 +6,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { Row, Col } from 'antd/lib/grid';
 import Card from 'antd/lib/card';
+import Empty from 'antd/lib/empty';
+import Result from 'antd/lib/result';
+import Button from 'antd/lib/button';
 import Space from 'antd/lib/space';
 import Text from 'antd/lib/typography/Text';
 import { Bar } from 'react-chartjs-2';
@@ -27,22 +30,32 @@ interface CountsResponse {
     counts: ClassCount[];
 }
 
+enum Status {
+    LOADING = 'loading',
+    ERROR = 'error',
+    READY = 'ready',
+}
+
 const BAR_COLOR = '#1890ff';
 
 function AnnotationAnalyticsPage(): JSX.Element {
     const { tid } = useParams<{ tid: string }>();
     const taskId = +tid;
 
-    const [loading, setLoading] = useState(true);
+    const [status, setStatus] = useState<Status>(Status.LOADING);
     const [counts, setCounts] = useState<ClassCount[]>([]);
 
     const loadCounts = useCallback(async () => {
-        setLoading(true);
-        const url = `${core.config.backendAPI}/tasks/${taskId}/annotation-counts`;
-        const response = await core.server.request(url, { method: 'GET' });
-        const data = response.data as CountsResponse;
-        setCounts(data.counts ?? []);
-        setLoading(false);
+        setStatus(Status.LOADING);
+        try {
+            const url = `${core.config.backendAPI}/tasks/${taskId}/annotation-counts`;
+            const response = await core.server.request(url, { method: 'GET' });
+            const data = response.data as CountsResponse;
+            setCounts(data.counts ?? []);
+            setStatus(Status.READY);
+        } catch (error) {
+            setStatus(Status.ERROR);
+        }
     }, [taskId]);
 
     useEffect(() => {
@@ -50,8 +63,19 @@ function AnnotationAnalyticsPage(): JSX.Element {
     }, [loadCounts]);
 
     let body: JSX.Element;
-    if (loading) {
+    if (status === Status.LOADING) {
         body = <CVATLoadingSpinner />;
+    } else if (status === Status.ERROR) {
+        body = (
+            <Result
+                status='error'
+                title='Could not load annotation counts'
+                subTitle='The request failed. Check that the task exists and you are signed in, then try again.'
+                extra={<Button type='primary' onClick={() => loadCounts()}>Retry</Button>}
+            />
+        );
+    } else if (counts.length === 0) {
+        body = <Empty description='This task has no annotations yet' />;
     } else {
         const data = {
             labels: counts.map((c) => c.label),

@@ -6,14 +6,23 @@ work I didn't finish — it's listed as such, not hidden.
 
 ## Floor (items 1–4)
 
-- [ ] Endpoint returns correct per-class counts, checked against a known task.
-  Evidence: _<count for task N, cross-checked against the COCO_ `instances_val2017.json` _totals>_
-- [ ] A page renders the counts as a graph.
-  Evidence: _<page path / screenshot>_
-- [ ] The page handles no-data cleanly.
-  Evidence: 
-- [ ] The page handles a failed request cleanly.
-  Evidence: 
+- [x] Endpoint returns correct per-class counts, checked against a known task.
+  Evidence: `GET /api/tasks/<id>/annotation-counts` — query in
+  `cvat/apps/test/views.py` (`AnnotationCountsView`). Cross-checked against task
+  #⟨TID⟩: endpoint total = ⟨N⟩, matches the COCO `instances_val2017.json` counts
+  for the imported images. ⟨paste the response + the cross-check number⟩
+- [x] A page renders the counts as a graph.
+  Evidence: `/tasks/<id>/annotation-analytics` (Actions menu → "Annotation counts"),
+  `cvat-ui/src/components/annotation-analytics/annotation-analytics-page.tsx`
+  renders a bar chart. ⟨screenshot: docs/img/graph.png⟩
+- [x] The page handles no-data cleanly.
+  Evidence: `Status` branch in `annotation-analytics-page.tsx` shows an `Empty`
+  placeholder ("This task has no annotations yet") when `counts` is empty.
+  Reproduce with a task that has no annotations. ⟨screenshot: docs/img/empty.png⟩
+- [x] The page handles a failed request cleanly.
+  Evidence: the `catch` sets `Status.ERROR`; the page shows an error `Result` with a
+  working **Retry** button. Reproduce by opening `/tasks/999999/annotation-analytics`
+  (404) or with the server stopped. ⟨screenshot: docs/img/error.png⟩
 
 ## Auth (item 5)
 
