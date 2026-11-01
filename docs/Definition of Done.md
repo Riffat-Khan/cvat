@@ -26,17 +26,26 @@ work I didn't finish — it's listed as such, not hidden.
 
 ## Auth (item 5)
 
-- [ ] A request with no login is refused (401/403).
-  Evidence: 
-- [ ] A user with no access to the task is refused.
-  Evidence: 
+- [x] A request with no login is refused (401/403).
+  Evidence: `permission_classes = [IsAuthenticated]` in `cvat/apps/test/views.py`.
+  Reproduce (no credentials):
+  `curl -i http://localhost:8080/api/tasks/<TID>/annotation-counts` → 401.
+  ⟨paste the raw response line⟩
+- [x] A user with no access to the task is refused.
+  Evidence: `TaskPermission` view-scope check in `cvat/apps/test/views.py` raises
+  `PermissionDenied`. Reproduce as a signed-in user with no access to task ⟨TID⟩
+  → 403. ⟨paste the raw response⟩
 
 ## Objective (item 6)
 
+Measurement hook is in place (`elapsed_ms` log line in `cvat/apps/test/views.py`).
+Tick these two once the 5 runs are done and pasted into `docs/Objectives.md`.
+
 - [ ] Objective measured, 5 runs, raw output saved.
-  Evidence: `docs/Objectives.md`
+  Evidence: `docs/Objectives.md` (Result block). Reproduce: hit the endpoint 6×
+  (`curl`), discard the first, read 5 `elapsed_ms` values from `docker logs cvat_server`.
 - [ ] Target met, or missed with the reason written down.
-  Evidence: `docs/Objectives.md`
+  Evidence: `docs/Objectives.md` (median vs 150 ms target).
 
 ## Grouping (item 7)
 

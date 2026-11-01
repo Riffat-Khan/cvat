@@ -15,8 +15,8 @@ numbers go in the Result block at item 6, after measuring — not before.
 
 | Field | Entry |
 |-------|-------|
-| **What is measured** | Server-side time to compute the per-class counts for one task and build the response — from a `perf_counter()` mark at the top of the count view to a mark just before it returns, logged in milliseconds. Auth, network and the browser are outside the marks. |
-| **How** | Hit the endpoint for the known task 5 times with `curl` on a warm stack; read the 5 logged millisecond values from the server log. Discard the first (cold) request before the 5 counted runs. |
+| **What is measured** | Server-side time to compute the per-class counts for one task and build the response — from a `perf_counter()` mark placed right after the access check to a mark right after the counts are built, logged in milliseconds as `elapsed_ms`. Auth, the task lookup, network and the browser are outside the marks. |
+| **How** | Hit the endpoint for the known task 5 times with `curl` on a warm stack; read the 5 logged `elapsed_ms` values from the server log (`docker logs cvat_server`). Discard the first (cold) request before the 5 counted runs. |
 | **Target** | Median of 5 runs at or below **150 ms**. |
 | **Conditions** | Warm stack (not the first request after a cold start), the single task with the recorded image count, nothing else running, measured server-side. |
 | **Not included** | The WebSocket path, the first request after a cold start, and the auth / OPA round-trip. |
